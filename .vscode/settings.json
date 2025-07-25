@@ -38,6 +38,12 @@
     "raspberry-pi-pico.cmakePath": "${HOME}/.pico-sdk/cmake/v3.31.5/bin/cmake",
     "raspberry-pi-pico.ninjaPath": "${HOME}/.pico-sdk/ninja/v1.12.1/ninja",
     "files.associations": {
-        "mpu6050.h": "c"
+        "mpu6050.h": "c",
+        "led.h": "c",
+        "i2c_protocol.h": "c",
+        "i2c.h": "c",
+        "stdlib.h": "c",
+        "sd_card.h": "c",
+        "sd_card_func.h": "c"
     }
 }

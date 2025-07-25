@@ -8,9 +8,6 @@
 #define BLUE_LED_PIN 12
 #define RED_LED_PIN 13
 
-#define LED_ON 1
-#define LED_OFF 0
-
 void led_setup(uint8_t gpio_pin);
 void leds_init();
 

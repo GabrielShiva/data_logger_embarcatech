@@ -29,14 +29,18 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src
 )
 
+add_subdirectory(inc/FatFs_SPI)
+
 add_executable(${PROJECT_NAME}
     src/main.c
+    src/hw_config.c
     inc/sensors/mpu6050.c
     inc/display/ssd1306.c
     inc/button/button.c
     inc/buzzer/buzzer.c
     inc/led_rgb/led.c
     inc/i2c_protocol/i2c_protocol.c
+    inc/sd_card_func/sd_card_func.c
 )
 
 pico_set_program_name(${PROJECT_NAME} ${PROJECT_NAME})
@@ -55,6 +59,8 @@ target_link_libraries(${PROJECT_NAME}
     pico_stdlib
     hardware_i2c
     hardware_pwm
+    FatFs_SPI
+    hardware_adc
     hardware_clocks
 )
 

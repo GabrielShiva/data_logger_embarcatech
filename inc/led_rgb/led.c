@@ -3,7 +3,7 @@
 void led_setup(uint8_t gpio_pin) {
     gpio_init(gpio_pin);
     gpio_set_dir(gpio_pin, GPIO_OUT);
-    gpio_put(gpio_pin, LED_OFF);
+    gpio_put(gpio_pin, 0);
 }
 
 void leds_init() {
@@ -13,11 +13,11 @@ void leds_init() {
 }
 
 void set_led_off(uint8_t gpio_pin) {
-    gpio_put(gpio_pin, LED_OFF);
+    gpio_put(gpio_pin, 0);
 }
 
 void set_led_on(uint8_t gpio_pin) {
-    gpio_put(gpio_pin, LED_ON);
+    gpio_put(gpio_pin, 1);
 }
 
 void leds_turnoff() {
