@@ -1,10 +1,4 @@
-#include <stdio.h>
-
-#include "pico/stdlib.h"
-
 #include "mpu6050.h"
-
-#include "hardware/i2c.h"
 
 void mpu6050_reset(i2c_inst_t *i2c) {
     uint8_t buffer[] = {0x6B, 0x80};
