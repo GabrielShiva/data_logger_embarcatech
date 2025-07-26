@@ -9,6 +9,7 @@ void btn_setup(uint8_t gpio_pin) {
 void btns_init() {
     btn_setup(BTN_A_PIN);
     btn_setup(BTN_B_PIN);
+    btn_setup(BTN_SW_PIN);
 }
 
 bool get_btn_state(uint8_t gpio_pin) {

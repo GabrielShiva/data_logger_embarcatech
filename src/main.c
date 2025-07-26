@@ -23,10 +23,13 @@
 
 static volatile uint32_t last_btn_a_press = 0;
 static volatile uint32_t last_btn_b_press = 0;
+static volatile uint32_t last_btn_sw_press = 0;
 
 // Variáveis de estado do sistema
 static volatile bool data_logger_state = false;
 static volatile bool is_mount_runned = false;
+
+static volatile uint menu_page = 0;
 
 // Informações do arquivo gerado
 static char file_name[20] = "adc_data.csv";
@@ -44,6 +47,8 @@ typedef struct sensor_data {
     float gyro_y;
     float gyro_z;
 } sensor_data_t;
+
+uint counter = 0;
 
 sensor_data_t sensor_data;
 
@@ -64,6 +69,7 @@ int main() {
 
     gpio_set_irq_enabled_with_callback(BTN_B_PIN, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled(BTN_A_PIN, GPIO_IRQ_EDGE_RISE, true);
+    gpio_set_irq_enabled(BTN_SW_PIN, GPIO_IRQ_EDGE_RISE, true);
 
     // Inicialização do LED RGB
     leds_init();
@@ -108,20 +114,125 @@ int main() {
     ssd1306_send_data(&ssd);
 
     while (true) {
+
+        // Exibição do menu principal
+        if (menu_page == 0) {
+            sprintf(buffer, "A - INICIAR");
+            ssd1306_draw_string(&ssd, buffer, 5, 30);
+            if (is_mount_runned == 0 && counter == 0) {
+                sprintf(buffer, "B - MONTAR");
+                ssd1306_draw_string(&ssd, buffer, 5, 45);
+            } else {
+                sprintf(buffer, "B - DESMONTAR");
+                ssd1306_draw_string(&ssd, buffer, 5, 45);
+            }
+            ssd1306_send_data(&ssd);
+        }
+
         // Realizar a montagem do cartão SD (pressionar BTN B)
-        if (is_mount_runned) {
+        if (is_mount_runned && counter == 0) {
+            ssd1306_fill(&ssd, !color);
+            ssd1306_send_data(&ssd);
+
+            sprintf(buffer, "MONTANDO O");
+            ssd1306_draw_string(&ssd, buffer, 5, 30);
+            sprintf(buffer, "CARTAO SD");
+            ssd1306_draw_string(&ssd, buffer, 5, 40);
+            ssd1306_send_data(&ssd);
+
+            sleep_ms(2500);
+
             bool success = run_mount();
 
-            if (success) {
+            ssd1306_fill(&ssd, !color);
+            ssd1306_send_data(&ssd);
 
+            if (success) {
+                sprintf(buffer, "CARTAO SD");
+                ssd1306_draw_string(&ssd, buffer, 5, 30);
+                sprintf(buffer, "MONTADO COM");
+                ssd1306_draw_string(&ssd, buffer, 5, 40);
+                sprintf(buffer, "SUCESSO");
+                ssd1306_draw_string(&ssd, buffer, 5, 50);
+                ssd1306_send_data(&ssd);
+
+                sleep_ms(2500);
+
+                ssd1306_fill(&ssd, !color);
+                ssd1306_send_data(&ssd);
+
+                is_mount_runned = true;
+                counter = 1;
             } else {
+                sprintf(buffer, "FALHA AO");
+                ssd1306_draw_string(&ssd, buffer, 5, 30);
+                sprintf(buffer, "MONTAR O");
+                ssd1306_draw_string(&ssd, buffer, 5, 40);
+                sprintf(buffer, "CARTAO SD");
+                ssd1306_draw_string(&ssd, buffer, 5, 50);
+                ssd1306_send_data(&ssd);
+
+                sleep_ms(2500);
+
+                ssd1306_fill(&ssd, !color);
+                ssd1306_send_data(&ssd);
+
                 is_mount_runned = false;
+                counter = 0;
             }
         }
 
         // Realizar a desmontagem do cartão SD (pressionar BTN B)
-        if (!is_mount_runned) {
+        if (!is_mount_runned && counter == 1) {
+            ssd1306_fill(&ssd, !color);
+            ssd1306_send_data(&ssd);
+
+            sprintf(buffer, "DESMONTANDO");
+            ssd1306_draw_string(&ssd, buffer, 5, 30);
+            sprintf(buffer, "O CARTAO SD");
+            ssd1306_draw_string(&ssd, buffer, 5, 40);
+            ssd1306_send_data(&ssd);
+
+            sleep_ms(2500);
+
             bool success = run_unmount();
+
+            ssd1306_fill(&ssd, !color);
+            ssd1306_send_data(&ssd);
+
+            if (success) {
+                sprintf(buffer, "CARTAO SD");
+                ssd1306_draw_string(&ssd, buffer, 5, 30);
+                sprintf(buffer, "DESMONTADO");
+                ssd1306_draw_string(&ssd, buffer, 5, 40);
+                sprintf(buffer, "COM SUCESSO");
+                ssd1306_draw_string(&ssd, buffer, 5, 50);
+                ssd1306_send_data(&ssd);
+
+                sleep_ms(2500);
+
+                ssd1306_fill(&ssd, !color);
+                ssd1306_send_data(&ssd);
+
+                is_mount_runned = false;
+                counter = 0;
+            } else {
+                sprintf(buffer, "FALHA AO");
+                ssd1306_draw_string(&ssd, buffer, 5, 30);
+                sprintf(buffer, "DESMONTAR O");
+                ssd1306_draw_string(&ssd, buffer, 5, 40);
+                sprintf(buffer, "CARTAO SD");
+                ssd1306_draw_string(&ssd, buffer, 5, 50);
+                ssd1306_send_data(&ssd);
+
+                sleep_ms(2500);
+
+                ssd1306_fill(&ssd, !color);
+                ssd1306_send_data(&ssd);
+
+                is_mount_runned = true;
+                counter = 1;
+            }
         }
 
         // // Realiza a leitura dos sensores integrados no MPU6050
@@ -149,16 +260,21 @@ int main() {
 void gpio_irq_handler(uint gpio, uint32_t events) {
     uint32_t current_time = to_ms_since_boot(get_absolute_time());
 
-    // Muda a página exibida no display
-    if (gpio == BTN_A_PIN && (current_time - last_btn_a_press > DEBOUNCE_TIME)) {
 
-    // Monta e desmonta o cartão sd
-    } else if (gpio == BTN_B_PIN && (current_time - last_btn_b_press > DEBOUNCE_TIME)) {
+    if (gpio == BTN_A_PIN && (current_time - last_btn_a_press > DEBOUNCE_TIME)) { // Muda a página exibida no display
+
+    } else if (gpio == BTN_B_PIN && (current_time - last_btn_b_press > DEBOUNCE_TIME)) { // Monta e desmonta o cartão sd
         last_btn_b_press = current_time;
 
         is_mount_runned = !is_mount_runned;
+    } else if (gpio == BTN_SW_PIN && (current_time - last_btn_sw_press > DEBOUNCE_TIME)) { // Muda de página
+        last_btn_sw_press = current_time;
 
-        // reset_usb_boot(0, 0);
+        menu_page++;
+
+        if (menu_page > 0) {
+            menu_page = 0;
+        }
     }
 }
 
