@@ -93,6 +93,7 @@ static bool color = true;
 char buffer[100];
 
 uint display_update_counter = 0;
+volatile bool needs_redraw = true;
 
 // Definição do protótipo das funções que serão criadas
 void gpio_irq_handler(uint gpio, uint32_t events);
@@ -161,11 +162,17 @@ int main() {
         if (display_state == DISPLAY_MENU) {
             switch (menu_page) {
                 case MENU_MAIN:
-                    show_main_menu();
+                    if (needs_redraw) {
+                        show_main_menu();
+                        needs_redraw = false;
+                    }
                     break;
 
                 case MENU_SAMPLING:
-                    show_sampling_menu();
+                    if (needs_redraw) {
+                        show_sampling_menu();
+                        needs_redraw = false;
+                    }
                     break;
 
                 default:
@@ -197,12 +204,14 @@ int main() {
                 gpio_put(GREEN_LED_PIN, 1);
                 show_action_message("Cartao SD", "Montado com", "Sucesso", 2500);
                 is_mount_runned = true;
+                needs_redraw = true;
                 counter = 1;
             } else {
                 leds_turnoff();
                 gpio_put(RED_LED_PIN, 1);
                 show_action_message("Falha ao", "Montar o", "Cartao SD", 2500);
                 is_mount_runned = false;
+                needs_redraw = true;
                 counter = 0;
             }
 
@@ -223,12 +232,14 @@ int main() {
                 gpio_put(GREEN_LED_PIN, 1);
                 show_action_message("Cartao SD", "Desmontado", "com Sucesso", 2500);
                 is_mount_runned = false;
+                needs_redraw = true;
                 counter = 0;
             } else {
                 leds_turnoff();
                 gpio_put(RED_LED_PIN, 1);
                 show_action_message("Falha ao", "Desmontar o", "Cartao SD", 2500);
                 is_mount_runned = true;
+                needs_redraw = true;
                 counter = 1;
             }
 
@@ -254,6 +265,7 @@ int main() {
 
                 show_action_message("Erro ao", "Iniciar", "Coleta", 2000);
                 show_action_message("Realize a", "Montagem", "do Cartao SD", 1500);
+                needs_redraw = true;
 
                 file_open_counter = 0;
                 sampling_state = SAMPLING_IDLE;
@@ -261,14 +273,15 @@ int main() {
                 gpio_put(RED_LED_PIN, 0);
             } else {
                 UINT bw;
+                needs_redraw = true;
 
                 if (file_counter == 0) {
-                    buzzer_play(BUZZER_LEFT_PIN, 1000);
-                    sleep_ms(250);
-                    buzzer_stop(BUZZER_LEFT_PIN);
-                    buzzer_play(BUZZER_LEFT_PIN, 1000);
-                    sleep_ms(250);
-                    buzzer_stop(BUZZER_LEFT_PIN);
+                    // buzzer_play(BUZZER_LEFT_PIN, 1000);
+                    // sleep_ms(250);
+                    // buzzer_stop(BUZZER_LEFT_PIN);
+                    // buzzer_play(BUZZER_LEFT_PIN, 1000);
+                    // sleep_ms(250);
+                    // buzzer_stop(BUZZER_LEFT_PIN);
 
                     sprintf(buffer, "numero_amostra,accel_x,accel_y,accel_z,giro_x,giro_y,giro_z\n");
                     res = f_write(&file, buffer, strlen(buffer), &bw);
@@ -296,12 +309,12 @@ int main() {
             gpio_put(BLUE_LED_PIN, 0);
             gpio_put(GREEN_LED_PIN, 1);
 
-            buzzer_play(BUZZER_LEFT_PIN, 600);
-            sleep_ms(250);
-            buzzer_stop(BUZZER_LEFT_PIN);
-            buzzer_play(BUZZER_LEFT_PIN, 600);
-            sleep_ms(250);
-            buzzer_stop(BUZZER_LEFT_PIN);
+            // buzzer_play(BUZZER_LEFT_PIN, 600);
+            // sleep_ms(250);
+            // buzzer_stop(BUZZER_LEFT_PIN);
+            // buzzer_play(BUZZER_LEFT_PIN, 600);
+            // sleep_ms(250);
+            // buzzer_stop(BUZZER_LEFT_PIN);
 
             show_action_message("Coleta de", "Dados", "Encerrada", 2500);
             // Reset de variáveis
@@ -312,6 +325,7 @@ int main() {
 
             // Volta ao estado inicial
             sampling_state = SAMPLING_IDLE;
+            needs_redraw = true;
         }
 
         sleep_ms(60);
@@ -362,6 +376,7 @@ void show_sampling_menu() {
     if (sampling_state == SAMPLING_RUNNING) {
         sprintf(buffer, "QTND: %d", file_counter);
         ssd1306_draw_string(&ssd, buffer, 5, 30);
+        needs_redraw = true;
     } else {
         sprintf(buffer, "Coleta");
         ssd1306_draw_string(&ssd, buffer, 5, 20);
@@ -369,6 +384,7 @@ void show_sampling_menu() {
         ssd1306_draw_string(&ssd, buffer, 5, 30);
         sprintf(buffer, "foi Iniciada");
         ssd1306_draw_string(&ssd, buffer, 5, 40);
+        needs_redraw = true;
     }
 
     ssd1306_send_data(&ssd);
@@ -396,6 +412,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         last_btn_sw_press = current_time;
 
         menu_page = (menu_page + 1) % MENU_MAX;
+        needs_redraw = true;
     }
 }
 
