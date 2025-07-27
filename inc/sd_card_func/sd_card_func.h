@@ -17,7 +17,7 @@
 
 sd_card_t *sd_get_by_name(const char *name);
 FATFS *sd_get_fs_by_name(const char *name);
-void run_format();
+bool run_format();
 bool run_mount();
 bool run_unmount();
 void run_get_size();

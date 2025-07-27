@@ -27,7 +27,7 @@ FATFS *sd_get_fs_by_name(const char *name) {
 }
 
 // Realiza a formatação de um dispositivo de armazenamento identificado por um nome
-void run_format() {
+bool run_format() {
     // Tenta obter o nome do dispositivo de uma entrada prévia
     // Se nenhum nome dor fornecido, define o primeiro dispositivo encontrado
     const char *arg1 = strtok(NULL, " ");
@@ -40,7 +40,7 @@ void run_format() {
 
     if (!p_fs) {
         printf("Unknown logical drive number: \"%s\"\n", arg1);
-        return;
+        return false;
     }
 
     // Realiza a formatação do dispositivo
@@ -51,7 +51,10 @@ void run_format() {
     // Se a formatação falhar, exibe uma mensagem de erro
     if (FR_OK != fr) {
         printf("f_mkfs error: %s (%d)\n", FRESULT_str(fr), fr);
+        return false;
     }
+
+    return true;
 }
 
 // Realiza a montaegm do sistema de arquivos do cartão SD utilizando FatFS
