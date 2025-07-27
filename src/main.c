@@ -92,6 +92,8 @@ ssd1306_t ssd;
 static bool color = true;
 char buffer[100];
 
+uint display_update_counter = 0;
+
 // Definição do protótipo das funções que serão criadas
 void gpio_irq_handler(uint gpio, uint32_t events);
 void show_main_menu();
@@ -261,6 +263,13 @@ int main() {
                 UINT bw;
 
                 if (file_counter == 0) {
+                    buzzer_play(BUZZER_LEFT_PIN, 1000);
+                    sleep_ms(250);
+                    buzzer_stop(BUZZER_LEFT_PIN);
+                    buzzer_play(BUZZER_LEFT_PIN, 1000);
+                    sleep_ms(250);
+                    buzzer_stop(BUZZER_LEFT_PIN);
+
                     sprintf(buffer, "numero_amostra,accel_x,accel_y,accel_z,giro_x,giro_y,giro_z\n");
                     res = f_write(&file, buffer, strlen(buffer), &bw);
                     printf("cabecalho\n");
@@ -287,6 +296,13 @@ int main() {
             gpio_put(BLUE_LED_PIN, 0);
             gpio_put(GREEN_LED_PIN, 1);
 
+            buzzer_play(BUZZER_LEFT_PIN, 600);
+            sleep_ms(250);
+            buzzer_stop(BUZZER_LEFT_PIN);
+            buzzer_play(BUZZER_LEFT_PIN, 600);
+            sleep_ms(250);
+            buzzer_stop(BUZZER_LEFT_PIN);
+
             show_action_message("Coleta de", "Dados", "Encerrada", 2500);
             // Reset de variáveis
             file_counter = 0;
@@ -298,7 +314,7 @@ int main() {
             sampling_state = SAMPLING_IDLE;
         }
 
-        sleep_ms(100);
+        sleep_ms(60);
     }
 
     return 0;
@@ -347,11 +363,11 @@ void show_sampling_menu() {
         sprintf(buffer, "QTND: %d", file_counter);
         ssd1306_draw_string(&ssd, buffer, 5, 30);
     } else {
-        sprintf(buffer, "Amostragem");
+        sprintf(buffer, "Coleta");
         ssd1306_draw_string(&ssd, buffer, 5, 20);
-        sprintf(buffer, "De Dados Nao");
+        sprintf(buffer, "de Dados nao");
         ssd1306_draw_string(&ssd, buffer, 5, 30);
-        sprintf(buffer, "Foi Iniciada");
+        sprintf(buffer, "foi Iniciada");
         ssd1306_draw_string(&ssd, buffer, 5, 40);
     }
 
@@ -373,7 +389,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     } else if (gpio == BTN_B_PIN && (current_time - last_btn_b_press > DEBOUNCE_TIME)) { // Monta e desmonta o cartão sd
         last_btn_b_press = current_time;
 
-        if (file_counter == 0) {
+        if (sampling_state == SAMPLING_IDLE) {
             is_mount_runned = !is_mount_runned;
         }
     } else if (gpio == BTN_SW_PIN && (current_time - last_btn_sw_press > DEBOUNCE_TIME)) { // Muda de página
