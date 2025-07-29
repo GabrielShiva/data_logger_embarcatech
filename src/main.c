@@ -282,7 +282,7 @@ int main() {
                     sleep_ms(250);
                     buzzer_stop(BUZZER_LEFT_PIN);
 
-                    sprintf(buffer_file, "tempo_ms,accel_x,accel_y,accel_z,giro_x,giro_y,giro_z\n");
+                    sprintf(buffer_file, "time_s,accel_x,accel_y,accel_z,giro_x,giro_y,giro_z\n");
                     res = f_write(&file, buffer_file, strlen(buffer_file), &bw);
                 } else {
                     absolute_time_t instant_time = to_ms_since_boot(get_absolute_time());
@@ -431,14 +431,14 @@ static void get_sensor_data() {
     mpu6050_read_raw(I2C0_PORT, accel, gyro, &temp);
 
     // Conversão para float dos valores lidos pelo giroscópio
-    sensor_data.gyro_x = (float)gyro[0];
-    sensor_data.gyro_y = (float)gyro[1];
-    sensor_data.gyro_z = (float)gyro[2];
+    sensor_data.gyro_x = gyro[0] / 131.0f;  // em °/s
+    sensor_data.gyro_y = gyro[1] / 131.0f;
+    sensor_data.gyro_z = gyro[2] / 131.0f;
 
     // Conversão para float dos valores lidos pelo acelerômetro e adequação à escala (g=9.81 m/s^2)
-    sensor_data.accel_x = accel[0] / 16384.0f;
-    sensor_data.accel_y = accel[1] / 16384.0f;
-    sensor_data.accel_z = accel[2] / 16384.0f;
+    sensor_data.accel_x = (accel[0] / 16384.0f) * 9.81; // em g
+    sensor_data.accel_y = (accel[1] / 16384.0f) * 9.81;
+    sensor_data.accel_z = (accel[2] / 16384.0f) * 9.81;
 
     printf("----\n");
     printf("ACCEL X: %.2f, Y: %.2f, Z: %.2f \n", sensor_data.accel_x, sensor_data.accel_y, sensor_data.accel_z);
